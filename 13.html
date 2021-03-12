@@ -1,0 +1,199 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>TEST</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+    </style>
+   <script src="../build/three.js"></script>
+    <script src="js/loaders/OBJLoader.js"></script>
+    <script src="js/loaders/STLLoader.js"></script>
+    <script src="js/libs/stats.min.js"></script>
+    <script src="js/controls/OrbitControls.js"></script>
+</head>
+
+<body>
+    <script type="text/javascript">
+        var scene,
+            camera,
+            renderer;
+
+        scene = new THREE.Scene(); // 创建场景
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); // 创建相机
+        renderer = new THREE.WebGLRenderer(); // 渲染器
+
+        renderer.setSize(window.innerWidth, window.innerHeight); // 设置渲染器 大小
+        document.body.appendChild(renderer.domElement);
+
+        scene.add(camera);
+
+        camera.position.z = 600;
+        
+
+        var geometry = new THREE.BoxGeometry(40, 40, 40);
+        var material = new THREE.MeshLambertMaterial( { color: 0xccccff} );
+        var cube = new THREE.Mesh( geometry, material );
+        cube.position.x = 150;
+        cube.position.y = 80;
+        cube.position.z = 0;
+        cube.rotation.x = 0;
+        cube.rotation.y = 3;
+        cube.rotation.z = 0;
+
+        scene.add(cube);
+
+        // var radius = 3,
+        //     segemnt = 20,
+        //     rings = 20,
+        //     R = 300;
+        // // THREE.Group继承自THREE.Object3D对象，并且和THREE.Object3D对象没有任何区别，仅仅是名字上的差异。
+        // var group = new THREE.Group();
+        // var bows = new THREE.Group();
+
+        // var sphereMaterial = new THREE.MeshLambertMaterial({
+        //     color: 0xff0000
+        // });
+
+        // for (var i = 0; i < 19; i++) {
+        //     var ball = new THREE.Mesh(new THREE.SphereGeometry(radius, segemnt, rings), sphereMaterial);
+        //     ball.position.x = R * Math.sin((Math.PI / 18) * i);
+        //     ball.position.y = R * Math.cos((Math.PI / 18) * i);
+
+        //     group.add(ball);
+        // }
+        // for (var j = 0; j < 36; j++) {
+        //     var bow = group.clone();
+        //     bow.rotation.y = Math.PI * 2 / 36 * j;
+        //     bows.add(bow);
+        // }
+        // scene.add(bows);
+        var loader = new THREE.STLLoader();
+        loader.load( 'models/stl/binary/colored.stl',function ( geometry ){
+        var material = new THREE.MeshPhongMaterial( { color: 990000, 
+        specular: 0Xf0ffff, shininess: 20 } );
+        var mesh = new THREE.Mesh( geometry, material );//创建mesh网格化模型，设置参数
+        var rr = 0;
+        mesh.position.set( 0, 10, 0.6 );
+        mesh.rotation.set( 0, - Math.PI / 2, 10 );
+        mesh.scale.set( 80, 80, 80 );
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        scene.add( mesh );    
+        } );
+        
+        // 坐标轴--------------------
+        var axes = new THREE.AxesHelper(200);
+        scene.add(axes);
+
+        var ambientLight = new THREE.AmbientLight(0Xffffff); //括号内传入指定颜色
+        scene.add(ambientLight);
+
+
+        var pointLight = new THREE.PointLight(0Xf0ffff);
+        pointLight.position.x = 0;
+        pointLight.position.y = 0;
+        pointLight.position.z = 100;
+        pointLight.intensity = 15;
+
+        scene.add(pointLight);
+
+        var mouseX, mouseY, isMove = false;
+        animation();
+
+        function animation() {
+            if (!isMove) {
+                //var rr;
+                requestAnimationFrame(animation); //循环调用函数
+                cube.rotation.y += Math.PI * 0.01;
+                cube.rotation.x += Math.PI * 0.01;
+                cube.rotation.z += Math.PI * 0.01;
+                
+                //axes.rotation.x += Math.PI * 0.01;
+                //axes.rotation.y += Math.PI * 0.01;
+                // for (var rr = 0; rr <= 100000; i++) {
+                // mesh.rotation.set（0，0，0）;
+                // mesh.rotation.y += 2;
+                // mesh.rotation.z += 2;
+                //  }//模型旋转
+
+                render(); //渲染界面  
+            }
+        }
+
+        function render() {
+            
+            requestAnimationFrame(render);
+           // mesh.rotation.x =  0.1 * Math.PI;
+            
+            //camera.lookAt( cameraTarget );
+            renderer.render(scene, camera);
+        }
+        /**
+            鼠标点击
+        **/
+        document.onmousedown = function(e) {
+            isMove = true;
+            mouseX = e.pageX;
+            mouseY = e.pageY;
+        };
+        document.onmousemove = function(e) {
+            var timer = Date.now() * 0.001;
+            if (isMove) {
+                var x = e.pageX;
+                var y = e.pageY;
+                var _x = x - mouseX;
+                var _y = y - mouseY;
+                cube.rotation.x += _x * 0.01 * Math.PI;
+                cube.rotation.y += _y * 0.01 * Math.PI;
+               // mesh.rotation.x += _y * 0.1 * Math.PI;
+               // mesh.rotation.y += _x * 0.1 * Math.PI;
+                camera.rotation.x = Math.cos( timer ) * Math.PI*0.1;
+                camera.position.y = Math.cos( timer ) * Math.PI*0.2;
+                camera.rotation.z = Math.cos( timer ) * Math.PI*0.5;
+                 camera.position.y += _x *Math.sin( timer ) * Math.PI;
+
+                render();
+                mouseX = x;
+                mouseY = y;
+            }
+        };
+        document.onmouseup = function() {
+            isMove = false;
+            animation();
+        }
+        
+        function draw() {
+            initGui();
+            initControls();
+            initStats();
+            animate();
+            window.onresize = onWindowResize;
+        }
+
+         function initStats() {
+ 
+                var stats = new Stats();
+ 
+                stats.setMode(0); // 0: fps, 1: ms
+ 
+ 
+                // Align top-left
+                stats.domElement.style.position = 'absolute';
+                stats.domElement.style.left = '0px';
+                stats.domElement.style.top = '0px';
+ 
+                $("#Stats-output").append(stats.domElement);
+ 
+                return stats;
+            }
+               console.log(loader)
+             var controls = new THREE.OrbitControls(camera);
+    </script>
+</body>
+
+</html>
