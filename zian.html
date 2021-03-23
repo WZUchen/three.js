@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <title>za的three.js学习之路</title>
+    <script type="text/javascript" src="../libs/three.js"></script>
+    <script type="text/javascript" src="../libs/OBJLoader.js"></script>
+    <script type="text/javascript" src="../libs/stats.js"></script>
+    <script type="text/javascript" src="../libs/dat.gui.js"></script>
+    <script type="text/javascript" src="../libs/TrackballControls.js"></script>
+    <style>
+      body {
+        /* 将margin设置为0，将overflow设置为hidden，以全屏显示 */
+        margin: 0;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="Stats-output"></div>
+    <!-- 保存输出的Div -->
+    <div id="WebGL-output"></div>
+
+    <!-- Javascript code that runs our Three.js examples -->
+    <script type="text/javascript">
+
+
+      function init() {
+          var clock = new THREE.Clock();
+
+          var stats = initStats();
+
+          // 创建一个场景，它将保存我们所有的元素，如物体、照相机和灯光。
+          var scene = new THREE.Scene();
+
+          //创建一个摄像头，它定义了我们要看的地方。
+          var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+          // 创建渲染并设置大小
+          var renderer = new THREE.WebGLRenderer();
+
+          renderer.setClearColor(new THREE.Color(0xEEEEEE, 1.0));
+          renderer.setSize(window.innerWidth, window.innerHeight);
+          renderer.shadowMap = true;
+
+          camera.position.x = 130;
+          camera.position.y = 40;
+          camera.position.z = 50;
+          camera.lookAt(scene.position);
+          scene.add(camera);
+
+          var ambiColor = "#0c0c0c";
+          var ambientLight = new THREE.AmbientLight(0x0c0c0c);//目的是弱化阴影和添加一些颜色
+          scene.add(ambientLight);
+
+          var spotLight = new THREE.DirectionalLight(0xffffff);
+          spotLight.position.set(30, 40, 50);
+          spotLight.intensity = 1;
+          scene.add(spotLight);
+
+          document.getElementById("WebGL-output").appendChild(renderer.domElement);
+
+
+          var step = 0;
+
+         
+        var mesh;
+          var loader = new THREE.OBJLoader();
+          loader.load('../libs/test.obj', function (loadedMesh) {
+
+          var material = new THREE.MeshLambertMaterial({color: 0x0cc00});
+          
+
+          loadedMesh.children.forEach(function (child) {
+              child.material = material;
+              child.geometry.computeFaceNormals();
+              child.geometry.computeVertexNormals();//计算法向量
+              //代码先实例化一个OBJLoader对象，然后调用load函数加载OBJ文件。
+              //load函数包含参数为load(url, callback)，url是OBJ文件路径，当加载完成后会调用第二个回调函数，包含一个参数loadedMesh。
+              //loadedMesh是一个组合体，所有需要遍历它下面的每个网格。
+              //child就是一个网格，需要设置它的material属性，并分别调用computeFaceNromals和computeVertexNormals函数，计算出几何体的法向量。
+              //加载出来的网格可能尺寸比较小，所以需要设置scale放大。   
+             
+            });
+            mesh= loadedMesh;
+            loadedMesh.scale.set(300, 300, 300);
+            loadedMesh.rotation.x = 0;
+            scene.add(loadedMesh);
+            //  console.log(mesh);
+            });
+
+            var controls = new function () {
+            this.scaleX = 1;
+            this.scaleY = 1;
+            this.scaleZ = 1;//改变大小
+
+            this.positionX = 0;
+            this.positionY = 4;
+            this.positionZ = 0;//改变位置
+        }
+
+        var gui = new dat.GUI();//创建操作组件
+        guiScale=gui.addFolder('scale');
+
+        guiScale.add(controls, 'scaleX', 300, 1000);
+        guiScale.add(controls, 'scaleY', 300, 1000);
+        guiScale.add(controls, 'scaleZ', 300, 1000);
+
+        guiPosition = gui.addFolder('position');
+        var contX = guiPosition.add(controls, 'positionX', -10, 10);
+        var contY = guiPosition.add(controls, 'positionY', -4, 20);
+        var contZ = guiPosition.add(controls, 'positionZ', -10, 10);
+        
+        contX.listen();
+         contX.onChange(function (value) {
+         mesh.position.x = controls.positionX;
+        });//当控制面板上的“position”文件夹下的”positionX”改变时，触发事件 比较复杂 不是很懂 网上查了很多资料 只要出现下拉框就需要这个类似于监听触发器的东东
+
+        contY.listen();
+        contY.onChange(function (value) {
+            mesh.position.y = controls.positionY;
+         });
+
+        contZ.listen();
+        contZ.onChange(function (value) {
+            mesh.position.z = controls.positionZ;
+        });
+
+
+          render();
+
+          function render() {
+            requestAnimationFrame(render);
+            
+              stats.update();
+      
+              if (mesh) {
+              mesh.rotation.y += 0.006;
+            //   mesh.rotation.x += 0.006;
+            //   mesh.rotation.y+=0.006;
+            //   mesh.scale.set(100, 200, 300);//先设置成常数，在改变成渲染时引用
+              mesh.scale.set(controls.scaleX, controls.scaleY, controls.scaleZ);
+             }
+           
+              //使用requestAnimationFrame渲染
+             
+              renderer.render(scene, camera);
+          }
+
+
+          function initStats() {
+
+          var stats = new Stats();
+
+          stats.setMode(0); // 0: fps, 1: ms
+        
+          // 左上对齐
+          stats.domElement.style.position = 'absolute';
+          stats.domElement.style.left = '0px';
+          stats.domElement.style.top = '0px';
+
+          document.getElementById("Stats-output").appendChild(stats.domElement);
+
+          return stats;
+          }
+          }
+
+          window.onload = init;
+    </script>
+  </body>
+</html>
